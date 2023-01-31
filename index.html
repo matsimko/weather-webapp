@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Weather info with graphs of past searches</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" href="css/index.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+        crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+        integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+        crossorigin=""></script>
+
+    <script src="https://kit.fontawesome.com/de6ee46f30.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.6.0/dist/chart.min.js"></script>
+
+    <!--Modules are defered automatically.
+    If the defer attribute is set, it specifies that the script is downloaded in parallel to parsing the page,
+    and executed after the page has finished parsing.
+    This means that no window.onload is needed.-->
+    <script type="module" src='main.js'></script>
+</head>
+
+<body>
+
+    <main class="container">
+        <div class="row mt-3 py-2 border border-2 rounded-3">
+            <div class="col-12">
+                <h2>Search</h2>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="searchOption" id="radio-city" value="city"
+                        checked>
+                    <label class="form-check-label" for="radio-city">
+                        by city
+                    </label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="searchOption" id="radio-latlng" value="latlng">
+                    <label class="form-check-label" for="radio-latlng">
+                        by latitude/longitude
+                    </label>
+                </div>
+            </div>
+            <div class="col-12 mt-2">
+                <div class="row justify-content-start align-items-center g-0">
+                    <div class="col-auto">
+                        <label class="form-check-label" for="units-select">Temperature units: </label>
+                    </div>
+                    <div class="col-4 col-md-2 col-xl-1 ps-1">
+                        <select id="units-select" class="form-select">
+                            <option value="metric">°C</option>
+                            <option value="imperial">°F</option>
+                            <option value="default">K</option>
+                        </select>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="col-12 mt-2">
+                <form id="city-search-form" class="needs-validation" novalidate>
+                    <div class="row justify-content-left g-0">
+                        <div class="col col-md-6 col-xl-4">
+                            <input type="text" class="form-control" id="city-input" placeholder="city" required>
+                            <div class="invalid-feedback">
+                                City must be non-empty.
+                            </div>
+                        </div>
+
+                        <div class="col-auto ps-1">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+                <form id="latlng-search-form" class="needs-validation" novalidate>
+                    <div class="row justify-content-start g-0">
+                        <div class="col col-md-6 col-xl-4 ">
+                            <div class="row g-0">
+                                <div class="col">
+                                    <input type="number" class="form-control" id="lat-input" placeholder="latitude"
+                                        step="any" min="-90" max="90" required>
+                                    <div class="invalid-feedback">-90 &GreaterEqual; latitude &leq; 90.</div>
+                                </div>
+
+                                <div class="col ps-1">
+                                    <input type="number" class="form-control" id="lng-input" placeholder="longitude"
+                                        step="any" min="-180" max="180" required>
+                                    <div class="invalid-feedback">-180 &GreaterEqual; longitude &leq; 180.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto ps-1">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-12 mt-2">
+                <div id="map"></div>
+            </div>
+            <div class="col-12">
+                <div class="bg-info p-1">
+                    <b>Note:</b>
+                    Click on the map to look up weather at that location.
+                </div>
+            </div>
+        </div>
+
+
+        <div id="weather-result" class="row py-2 mt-3 border border-2 rounded-3 d-none  ">
+            <div class="col-12 fs-5">
+
+                <h2 id="location">
+                </h2>
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <h3 class="display-3"><span id="temp"></span></h3>
+                    </div>
+                    <div class="col-auto">
+                        <div class="d-flex align-items-center">
+                            <img id="weather-icon" src="" alt="weather">
+                            <span id="weather-desc"></span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div>Feels like: <span id="feels-like"></span></div>
+                <div>Atmospheric pressure: <span id="pressure"></span></div>
+                <div>Humidity: <span id="humidity"></span></div>
+            </div>
+        </div>
+        <div id="no-weather-data" class="row py-2 mt-3 border border-2 rounded-3 d-none">
+            <div class="col">
+                <div class="fs-3">No weather data found for last search</div>
+            </div>
+
+        </div>
+
+
+        <div class="row py-2 mt-3 border border-2 rounded-3">
+            <div class="col-12">
+                <h2>Search history</h2>
+            </div>
+            <div class="col-12">
+                <canvas id="weather-chart"></canvas>
+            </div>
+            <div class="col-12 mt-2">
+                <div id="weather-history" class="list-group">
+
+                </div>
+            </div>
+
+
+
+    </main>
+
+    <script src="bootstrap/bootstrap.bundle.min.js"></script>
+
+</body>
+
+</html>
